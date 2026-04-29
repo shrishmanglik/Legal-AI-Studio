@@ -1,10 +1,10 @@
 from datetime import date
 
 from sqlalchemy import Date, String, Text
-from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import Base, UUIDMixin
+from app.models.types import jsonb_column
 
 
 class EmploymentStandard(UUIDMixin, Base):
@@ -24,4 +24,4 @@ class ComplianceRule(UUIDMixin, Base):
     category: Mapped[str] = mapped_column(String(200), nullable=False)
     rule_name: Mapped[str] = mapped_column(String(200), nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=False)
-    checklist_items: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+    checklist_items: Mapped[dict] = mapped_column(jsonb_column(), nullable=False, default=dict)

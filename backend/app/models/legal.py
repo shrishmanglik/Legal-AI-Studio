@@ -1,10 +1,10 @@
 from datetime import datetime
 
 from sqlalchemy import DateTime, String, Text, func
-from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import Base, UUIDMixin
+from app.models.types import jsonb_column
 
 
 class Statute(UUIDMixin, Base):
@@ -25,7 +25,7 @@ class LegalAICache(UUIDMixin, Base):
     )
     query_text: Mapped[str] = mapped_column(Text, nullable=False)
     response_text: Mapped[str] = mapped_column(Text, nullable=False)
-    statute_ids: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    statute_ids: Mapped[dict | None] = mapped_column(jsonb_column(), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime, default=func.now(), nullable=False
     )

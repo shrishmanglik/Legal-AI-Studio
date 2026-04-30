@@ -54,9 +54,15 @@ class DisclaimerMiddleware(BaseHTTPMiddleware):
         except (json.JSONDecodeError, TypeError):
             new_body = body
 
+        # Drop content-length from original headers — it no longer matches
+        # new_body and Starlette would otherwise forward the stale length,
+        # causing clients to abort with IncompleteRead. media_type forces
+        # Starlette to derive a fresh length from the new content.
+        headers = {k: v for k, v in response.headers.items() if k.lower() != "content-length"}
+
         return Response(
             content=new_body,
             status_code=response.status_code,
-            headers=dict(response.headers),
+            headers=headers,
             media_type="application/json",
         )

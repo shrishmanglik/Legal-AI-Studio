@@ -1,0 +1,74 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: legalai
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata_dev:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: development
+    ports:
+      - "8004:8004"
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/legalai
+      JWT_SECRET: dev-secret-key
+      CORS_ORIGINS: http://localhost:3004,http://localhost:3005
+      CLAUDE_API_KEY: ${CLAUDE_API_KEY:-}
+      DEBUG: "true"
+    volumes:
+      - ./backend/app:/app/app
+      - ./backend/tests:/app/tests
+    depends_on:
+      db:
+        condition: service_healthy
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8004 --reload
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: deps
+    ports:
+      - "3004:3004"
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8004/api/v1
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+    depends_on:
+      - backend
+    command: npm run dev
+
+  atlas:
+    build:
+      context: ./atlas
+      dockerfile: Dockerfile
+      target: deps
+    ports:
+      - "3005:3005"
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8004/api/v1
+    volumes:
+      - ./atlas/src:/app/src
+      - ./atlas/public:/app/public
+    depends_on:
+      - backend
+    command: npm run dev
+
+volumes:
+  pgdata_dev:
